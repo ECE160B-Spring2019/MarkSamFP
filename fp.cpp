@@ -97,13 +97,13 @@ void Board::placebombs(int row, int col) {
         for(row = 0; row < rowl; row++) {
                 for (col = 0; col < rowl; col++) {
                         n = 0;
-                        if(row - 1 > 0 && col - 1 > 0 && t[row-1][col-1].bomb == 1) {
+                        if(row - 1 >= 0 && col - 1 >= 0 && t[row-1][col-1].bomb == 1) {
                                 n += 1;
                         }
-                        if(row - 1 > 0 && t[row-1][col].bomb == 1) {
+                        if(row - 1 >= 0 && t[row-1][col].bomb == 1) {
                                 n += 1;
                         }
-                        if(row - 1 > 0 && col + 1 < coll && t[row-1][col+1].bomb == 1) {
+                        if(row - 1 >= 0 && col + 1 < coll && t[row-1][col+1].bomb == 1) {
                                 n += 1;
                         }
                         if(col + 1 < coll && t[row][col+1].bomb == 1) {
@@ -115,10 +115,10 @@ void Board::placebombs(int row, int col) {
                         if(row + 1 < rowl && t[row+1][col].bomb == 1) {
                                 n += 1;
                         }
-                        if(row + 1 < rowl && col - 1 > 0 && t[row+1][col-1].bomb == 1) {
+                        if(row + 1 < rowl && col - 1 >= 0 && t[row+1][col-1].bomb == 1) {
                                 n += 1;
                         }
-                        if(col - 1 > 0 && t[row][col-1].bomb == 1) {
+                        if(col - 1 >= 0 && t[row][col-1].bomb == 1) {
                                 n += 1;
                         }
                         t[row][col].num = n;
@@ -137,6 +137,29 @@ void Board::flagtile(int r, int c) {
 
 void Board::unflagtile(int r, int c) {
         t[r][c].flag = 0;
+}
+
+void tileprint(Tile t[30][30], int r, int c) {
+        switch(t[r][c].num) {
+                case 1: printf("  \033[1;34m%i\033[0m ", t[r][c].num);
+                        break;
+                case 2: printf("  \033[1;32m%i\033[0m ", t[r][c].num);
+                        break;
+                case 3: printf("  \033[1;31m%i\033[0m ", t[r][c].num);
+                        break;
+                case 4: printf("  \033[1;35m%i\033[0m ", t[r][c].num);
+                        break;
+                case 5: printf("  \033[0;31m%i\033[0m ", t[r][c].num);
+                        break;
+                case 6: printf("  \033[1;36m%i\033[0m ", t[r][c].num);
+                        break;
+                case 7: printf("  \033[0;35m%i\033[0m ", t[r][c].num);
+                        break;
+                case 8: printf("  \033[0;34m%i\033[0m ", t[r][c].num);
+                        break;
+                default: printf("  %i ", t[r][c].num);
+                        break;
+        }
 }
 
 void Board::drawboard() {
@@ -168,10 +191,10 @@ void Board::drawboard() {
                 }
                 else if (t[row][0].show == 1) {
                         if(t[row][0].bomb == 1) {
-                                printf("  * ");
+                                printf("  \033[1;31m*\033[0;0m ");
                         }
                         else {
-                                printf(" %i  ", t[row][0].num);
+                                tileprint(t, row, 0);
                         }
                 }
                 for (col = 1; col < coll; col++) {
@@ -183,10 +206,11 @@ void Board::drawboard() {
                         }
                         else if (t[row][col].show == 1) {
                                 if(t[row][col].bomb == 1) {
-                                        printf("| *  ");
+                                        printf("| \033[1;31m*\033[0;0m  ");
                                 }
                                 else {
-                                        printf("| %i  ", t[row][col].num);
+                                        printf("|");
+                                        tileprint(t, row, col);
                                 }
                         }
                 }
@@ -245,6 +269,15 @@ int checktile(Board b, int r, int c, char i) {
         if ((i == 'p' || i == 'P') && b.t[r-1][c-1].show == 1) {
                 return 1;
         }
+        if ((i == 'u' || i == 'U') && b.t[r-1][c-1].show == 1) {
+                return 1;
+        }
+        if ((i == 'p' || i == 'P') && b.t[r-1][c-1].flag == 1) {
+                return 1;
+        }
+        if ((i == 'r' || i == 'R') && b.t[r-1][c-1].flag == 0) {
+                return 1;
+        }
         else {
                 return 0;
         }
@@ -286,7 +319,6 @@ int checkwin(Board b) {
         }
 }
 
-//Keep getting Seg fault as a result of this function, not sure if because board is empty or code is faulty
 void checkempty(Board* b, int r, int c) {
         if(b->t[r][c].num == 0) {
                 if(r-1 >= 0 && c-1 >= 0) {
