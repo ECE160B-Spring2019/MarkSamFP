@@ -157,7 +157,7 @@ void tileprint(Tile t[30][30], int r, int c) {
                         break;
                 case 8: printf("  \033[0;34m%i\033[0m ", t[r][c].num);
                         break;
-                default: printf("  %i ", t[r][c].num);
+                default: printf("    ", t[r][c].num);
                         break;
         }
 }
@@ -187,7 +187,7 @@ void Board::drawboard() {
                         printf("  F ");
                 }
                 else if (t[row][0].show == 0) {
-                        printf("    ");
+                        printf("||||");
                 }
                 else if (t[row][0].show == 1) {
                         if(t[row][0].bomb == 1) {
@@ -199,17 +199,17 @@ void Board::drawboard() {
                 }
                 for (col = 1; col < coll; col++) {
                         if(t[row][col].flag == 1) {
-                                printf("|  F ");
+                                printf("\033[0;33m|\033[0m  F ");
                         }
                         else if (t[row][col].show == 0) {
-                                printf("|    ");
+                                printf("\033[0;33m|\033[0m||||");
                         }
                         else if (t[row][col].show == 1) {
                                 if(t[row][col].bomb == 1) {
-                                        printf("| \033[1;31m*\033[0;0m  ");
+                                        printf("\033[0;33m|\033[0m \033[1;31m*\033[0;0m  ");
                                 }
                                 else {
-                                        printf("|");
+                                        printf("\033[0;33m|\033[0m");
                                         tileprint(t, row, col);
                                 }
                         }
@@ -218,7 +218,7 @@ void Board::drawboard() {
                 if (row != (rowl - 1)) {
                         printf("    ");
                         for (col = 0; col < coll; col++) {
-                                printf("-----");
+                                printf("\033[0;33m-----\033[0m");
                         }
                         printf("\n");
                 }
@@ -306,8 +306,8 @@ int checkwin(Board b) {
         int n = 0;
         for (row = 0; row < rowl; row++) {
                 for (col = 0; col < coll; col++) {
-                        if(b.t[row][col].show != b.t[row][col].bomb) {
-                                n += 1;
+                        if(b.t[row][col].bomb == 0 && b.t[row][col].show == 1) {
+                                n+= 1;
                         }
                 }
         }
