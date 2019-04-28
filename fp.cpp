@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -24,22 +25,20 @@ class Board {
         void flagtile(int r, int c);
         void unflagtile(int r, int c);
         void drawboard();
-        void placebombs();
+        void placebombs(int row, int col);
 };
 
 void Board::initboard() {
         int row, col, n;
         
-        /* Place Pseudo Random Bomb Placer Algorithm Here */
-
         if(difficulty == 'e' || difficulty == 'E') {
-                bombs = (rowl * coll) * .15;        // Arbitrary values chosen for difficulties, change as needed
+                bombs = (rowl * coll) * .12;
         }
         else if(difficulty == 'm' || difficulty == 'M') {
-                bombs = (rowl * coll) * .25;
+                bombs = (rowl * coll) * .16;
         }
         else {
-                bombs = (rowl * coll) * .35;
+                bombs = (rowl * coll) * .18;
         }
 
         for(row = 0; row < 30; row++) {
@@ -48,6 +47,56 @@ void Board::initboard() {
                         t[row][col].flag = 0;
                         t[row][col].bomb = 0;
                         t[row][col].show = 0;
+                }
+        }
+        
+}
+
+int freesquare(int r1, int r2, int r, int c) {
+        if (r1 == r && r2 == c) {
+                return 1;
+        }
+        if (r1 == r-1 && r2 == c-1) {
+                return 1;
+        }
+        if (r1 == r-1 && r2 == c) {
+                return 1;
+        }
+        if (r1 == r-1 && r2 == c+1) {
+                return 1;
+        }
+        if (r1 == r && r2 == c+1) {
+                return 1;
+        }
+        if (r1 == r+1 && r2 == c+1) {
+                return 1;
+        }
+        if (r1 == r+1 && r2 == c) {
+                return 1;
+        }
+        if (r1 == r+1 && r2 == c-1) {
+                return 1;
+        }
+        if (r1 == r && r2 == c-1) {
+                return 1;
+        }
+        return 0;
+}
+
+void Board::placebombs(int row, int col) {
+        int i;
+        int rand1, rand2, n;
+        srand(time(0));
+        for(i = 0; i < bombs; i++) {
+                do {
+                        rand1 = rand() % rowl;
+                        rand2 = rand() % coll;
+                } while (freesquare(rand1, rand2, row-1, col-1) || t[rand1][rand2].bomb == 1);
+                t[rand1][rand2].bomb = 1;
+        }
+        for(row = 0; row < rowl; row++) {
+                for (col = 0; col < rowl; col++) {
+                        n = 0;
                         if(row - 1 > 0 && col - 1 > 0 && t[row-1][col-1].bomb == 1) {
                                 n += 1;
                         }
@@ -75,11 +124,7 @@ void Board::initboard() {
                         t[row][col].num = n;
                 }
         }
-        for (row = 0; row < 5; row++) {
-                for(col = 0; col < coll; col++) {
-                        t[row][col].num = 5;
-                }
-        }
+
 }
 
 void Board::revealtile(int r, int c) {
@@ -98,7 +143,7 @@ void Board::drawboard() {
         int row;
         int col;
         printf("\n");
-        printf("   ");
+        printf("    ");
         for(col = 0; col < coll; col++) {
                 if(col < 9) {
                         printf("  %i  ", col + 1);
@@ -110,10 +155,10 @@ void Board::drawboard() {
         printf("\n");
         for (row = 0; row < rowl; row++) {
                 if (row < 9) {
-                        printf(" %i:", row + 1);
+                        printf(" %i: ", row + 1);
                 }
                 else {
-                        printf("%i:", row + 1);
+                        printf("%i: ", row + 1);
                 }
                 if(t[row][0].flag == 1) {
                         printf("  F ");
@@ -147,10 +192,10 @@ void Board::drawboard() {
                 }
                 printf("\n");
                 if (row != (rowl - 1)) {
+                        printf("    ");
                         for (col = 0; col < coll; col++) {
                                 printf("-----");
                         }
-                        printf("--");
                         printf("\n");
                 }
         }
@@ -171,9 +216,9 @@ void check_boardsize() {
 
 void check_difficulty() {
         do {
-                cout << "Easy (E or e): 10% - 20% Bombs" << endl;
-                cout << "Medium (M or m): 20% - 30% Bombs" << endl;
-                cout << "Hard (H or h): 30% - 40% Bombs" << endl;
+                cout << "Easy (E or e): ~12% Bombs" << endl;
+                cout << "Medium (M or m): ~16% Bombs" << endl;
+                cout << "Hard (H or h): ~18% Bombs" << endl;
                 cout << "Enter a difficulty: " << endl;
                 cin >> difficulty;
         } while (difficulty != 'E' && difficulty != 'e' && difficulty != 'M' && difficulty != 'm' && difficulty != 'H' && difficulty != 'h');
@@ -245,39 +290,96 @@ int checkwin(Board b) {
 void checkempty(Board* b, int r, int c) {
         if(b->t[r][c].num == 0) {
                 if(r-1 >= 0 && c-1 >= 0) {
-                        b->t[r-1][c-1].show = 1;
-                        checkempty(b, r-1, c-1);
+                        if(b->t[r-1][c-1].show == 1) {
+                                ;
+                        }
+                        else{
+                                b->t[r-1][c-1].show = 1;
+                                checkempty(b, r-1, c-1);
+                        }
                 }
                 if(r-1 >= 0) {
-                        b->t[r-1][c].show = 1;
-                        checkempty(b, r-1, c);
+                        if(b->t[r-1][c].show == 1) {
+                                ;
+                        }
+                        else {
+                                b->t[r-1][c].show = 1;
+                                checkempty(b, r-1, c);
+                        }
                 }
                 if(r-1 >= 0 && c+1 < coll) {
-                        b->t[r-1][c+1].show = 1;
-                        checkempty(b, r-1, c+1);
+                        if(b->t[r-1][c+1].show == 1) {
+                                ;
+                        }
+                        else {
+                                b->t[r-1][c+1].show = 1;
+                                checkempty(b, r-1, c+1);
+                        }
                 }
                 if(c+1 < coll) {
-                        b->t[r][c+1].show = 1;
-                        checkempty(b, r, c+1);
+                        if(b->t[r][c+1].show == 1) {
+                                ;
+                        }
+                        else {
+                                b->t[r][c+1].show = 1;
+                                checkempty(b, r, c+1);
+                        }
                 }
                 if(r+1 < rowl && c+1 < coll) {
-                        b->t[r+1][c+1].show = 1;
-                        checkempty(b, r+1, c+1);
+                        if(b->t[r+1][c+1].show == 1) {
+                                ;
+                        }
+                        else {
+                                b->t[r+1][c+1].show = 1;
+                                checkempty(b, r+1, c+1);
+                        }
                 }
                 if(r+1 < rowl) {
-                        b->t[r+1][c].show = 1;
-                        checkempty(b, r+1, c);
+                        if(b->t[r+1][c].show == 1) {
+                                ;
+                        }
+                        else {
+                                b->t[r+1][c].show = 1;
+                                checkempty(b, r+1, c);
+                        }
                 }
                 if(r+1 < rowl && c-1 >= 0) {
-                        b->t[r+1][c-1].show = 1;
-                        checkempty(b, r+1, c-1);
+                        if(b->t[r+1][c-1].show == 1) {
+                                ;
+                        }
+                        else {
+                                b->t[r+1][c-1].show = 1;
+                                checkempty(b, r+1, c-1);
+                        }
                 }
                 if(c-1 >= 0) {
-                        b->t[r][c-1].show = 1;
-                        checkempty(b, r, c-1);
+                        if(b->t[r][c-1].show == 1) {
+                                ;
+                        }
+                        else {
+                                b->t[r][c-1].show = 1;
+                                checkempty(b, r, c-1);
+                        }
                 }
         }
         return;
+}
+
+void firstbox(Board *b, int *row, int *col, char *item) {
+                do {
+                        b->drawboard();
+                        asktile(*b, row, col, item);
+                        if(*item == 'p' || *item == 'P') {
+                                b->flagtile((*row)-1, (*col)-1);
+                        }
+                        if(*item == 'r' || *item == 'R') {
+                                b->unflagtile((*row)-1, (*col)-1);
+                        }
+                        if(*item == 'u' || *item == 'U') {
+                                b->revealtile((*row)-1, (*col)-1);
+                        }
+                } while (*item != 'U' && *item != 'u');
+
 }
 
 void play_game() {
@@ -285,6 +387,9 @@ void play_game() {
         char item;
         Board b;
         b.initboard();
+        firstbox(&b, &row, &col, &item);
+        b.placebombs(row, col);
+        checkempty(&b, row-1, col -1);
         while(1) {
                 b.drawboard();
                 asktile(b, &row, &col, &item);
