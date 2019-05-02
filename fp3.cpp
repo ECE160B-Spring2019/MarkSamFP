@@ -1,6 +1,4 @@
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
+#include "fp.h"
 
 #define RESET "\033[0m"
 #define BLUE "\033[1;34m"
@@ -13,27 +11,11 @@
 #define YELLOW "\033[0;33m"
 #define GAMELOST "\033[0;33m|\033[0m \033[1;31m*\033[0;0m  "
 
+
 using namespace std;
 
-int rowl;
-int coll;
-char difficulty;
-
-class Tile {
-        public:
-        Tile() {flag = 0, bomb = 0, show = 0, num = 0;}
-        int flag;
-        int bomb;
-        int show;
-        int num;
-};
-
-class Board {
-        public:
-        int tilesShown = 0;
-        Tile t[30][30];
-        int bombs;
-        void initboard();
+class tBoard : public Board {
+    public:
         void revealtile(int r, int c);
         void flagtile(int r, int c);
         void unflagtile(int r, int c);
@@ -42,38 +24,32 @@ class Board {
         void placebombs(int r, int c);
         void check_empty(int r, int c);
         int check_win();
+        bool freesquare(int r1, int r2, int r, int c);
 };
 
-void Board::initboard() {
-        int row, col, n;
-
-
-        if(difficulty == 'e' || difficulty == 'E') {
-                bombs = (rowl * coll) * .12;
+class tGame : public Game {
+    public:
+        tGame() {
+            b = new tBoard;
         }
-        else if(difficulty == 'm' || difficulty == 'M') {
-                bombs = (rowl * coll) * .16;
+        ~tGame() {
+            delete b;
         }
-        else {
-                bombs = (rowl * coll) * .18;
-        }
+        void check_boardsize();
+        void check_difficulty();
+        int play_again();
+        int checktile(int r, int c, char i);
+        void asktile(int& r, int& c, char& i);
+        void firstbox(int& row, int& col, char& item);
+        void play_game();
+};
 
-        for(row = 0; row < 30; row++) {
-                for (col = 0; col < 30; col++) {
-                        n = 0;
-                        t[row][col].flag = 0;
-                        t[row][col].bomb = 0;
-                        t[row][col].show = 0;
-                }
-        }
 
-}
-
-bool freesquare(int r1, int r2, int r, int c) {
+bool tBoard::freesquare(int r1, int r2, int r, int c) {
         return abs(r1 - r) <= 1 && abs(r2 - c) <= 1;
 }
 
-void Board::placebombs(int row, int col) {
+void tBoard::placebombs(int row, int col) {
         int i;
         int rand1, rand2, n;
         srand(time(0));
@@ -111,22 +87,20 @@ void Board::placebombs(int row, int col) {
 
 }
 
-void Board::revealtile(int r, int c) {
+void tBoard::revealtile(int r, int c) {
         t[r][c].show = 1;
         tilesShown++;
 }
 
-void Board::flagtile(int r, int c) {
+void tBoard::flagtile(int r, int c) {
         t[r][c].flag = 1;
 }
 
-void Board::unflagtile(int r, int c) {
+void tBoard::unflagtile(int r, int c) {
         t[r][c].flag = 0;
 }
 
-    // ---------------------------------------------//
-
-void Board::drawtile(int r, int c) {
+void tBoard::drawtile(int r, int c) {
         if(c > 0) {
             cout << YELLOW << "|" << RESET;
         }
@@ -168,7 +142,7 @@ void Board::drawtile(int r, int c) {
 
         // ---------------------------------------------//
 
-void Board::drawboard() {
+void tBoard::drawboard() {
         int row;
         int col;
         cout << endl << "    ";
@@ -204,22 +178,109 @@ void Board::drawboard() {
         return;
 }
 
-int Board::check_win() {
+int tBoard::check_win() {
     return (tilesShown + bombs == rowl * coll);
 }
 
-void check_boardsize() {
-        do {
-                cout << "Enter a board height: (10-30) " << endl;
-                cin >> rowl;
-        } while (rowl < 10 || rowl > 30);
-        do {
-                cout << "Enter a board width: (10-30) " << endl;
-                cin >> coll;
-        } while (coll < 10 || coll > 30);
+void tBoard::check_empty(int r, int c) {
+    if(t[r][c].num == 0) {
+        if(r-1 >= 0 && c-1 >= 0) {
+            if(t[r-1][c-1].show == 1) {
+                ;
+            }
+            else{
+                revealtile(r-1, c-1);
+                check_empty(r-1, c-1);
+            }
+        }
+        if(r-1 >= 0) {
+            if(t[r-1][c].show == 1) {
+                ;
+            }
+            else {
+                revealtile(r-1, c);
+                check_empty(r-1, c);
+            }
+        }
+        if(r-1 >= 0 && c+1 < coll) {
+            if(t[r-1][c+1].show == 1) {
+                ;
+            }
+            else {
+                revealtile(r-1, c+1);
+                check_empty(r-1, c+1);
+            }
+        }
+        if(c+1 < coll) {
+            if(t[r][c+1].show == 1) {
+                ;
+            }
+            else {
+                revealtile(r, c+1);
+                check_empty(r, c+1);
+            }
+        }
+        if(r+1 < rowl && c+1 < coll) {
+            if(t[r+1][c+1].show == 1) {
+                ;
+            }
+            else {
+                revealtile(r+1, c+1);
+                check_empty(r+1, c+1);
+            }
+        }
+        if(r+1 < rowl) {
+            if(t[r+1][c].show == 1) {
+                ;
+            }
+            else {
+                revealtile(r+1, c);
+                check_empty(r+1, c);
+            }
+        }
+        if(r+1 < rowl && c-1 >= 0) {
+            if(t[r+1][c-1].show == 1) {
+                ;
+            }
+            else {
+                revealtile(r+1, c-1);
+                check_empty(r+1, c-1);
+            }
+        }
+        if(c-1 >= 0) {
+            if(t[r][c-1].show == 1) {
+                ;
+            }
+            else {
+                revealtile(r, c-1);
+                check_empty(r, c-1);
+            }
+        }
+    }
+    return;
 }
 
-void check_difficulty() {
+void tGame::check_boardsize() {
+        int rows, cols;
+        do {
+                cout << "Enter a board height: (10-30) " << endl;
+                cin >> rows;
+        } while (rows < 10 || rows > 30);
+        do {
+                cout << "Enter a board width: (10-30) " << endl;
+                cin >> cols;
+        } while (cols < 10 || cols > 30);
+
+        b->t.resize(rows);
+        for(int ii = 0; ii < rows; ii++) {
+            b->t[ii].resize(cols);
+        }
+
+        b->rowl = rows;
+        b->coll = cols;
+}
+
+void tGame::check_difficulty() {
         do {
                 cout << "Easy (E or e): ~12% Bombs" << endl;
                 cout << "Medium (M or m): ~16% Bombs" << endl;
@@ -227,9 +288,19 @@ void check_difficulty() {
                 cout << "Enter a difficulty: " << endl;
                 cin >> difficulty;
         } while (difficulty != 'E' && difficulty != 'e' && difficulty != 'M' && difficulty != 'm' && difficulty != 'H' && difficulty != 'h');
+
+        if(difficulty == 'e' || difficulty == 'E') {
+                b->bombs = (b->rowl * b->coll) * .12;
+        }
+        else if(difficulty == 'm' || difficulty == 'M') {
+                b->bombs = (b->rowl * b->coll) * .16;
+        }
+        else {
+                b->bombs = (b->rowl * b->coll) * .18;
+        }
 }
 
-int play_again() {
+int tGame::play_again() {
         char response;
         do {
                 cout << "Do you want to play again? (y/n) " << endl;
@@ -243,20 +314,20 @@ int play_again() {
         }
 }
 
-int checktile(Board& b, int r, int c, char i) {
-        if ((i == 'u' || i == 'U') && b.t[r-1][c-1].flag == 1) {
+int tGame::checktile(int r, int c, char i) {
+        if ((i == 'u' || i == 'U') && b->t[r-1][c-1].flag == 1) {
                 return 1;
         }
-        if ((i == 'p' || i == 'P') && b.t[r-1][c-1].show == 1) {
+        if ((i == 'p' || i == 'P') && b->t[r-1][c-1].show == 1) {
                 return 1;
         }
-        if ((i == 'u' || i == 'U') && b.t[r-1][c-1].show == 1) {
+        if ((i == 'u' || i == 'U') && b->t[r-1][c-1].show == 1) {
                 return 1;
         }
-        if ((i == 'p' || i == 'P') && b.t[r-1][c-1].flag == 1) {
+        if ((i == 'p' || i == 'P') && b->t[r-1][c-1].flag == 1) {
                 return 1;
         }
-        if ((i == 'r' || i == 'R') && b.t[r-1][c-1].flag == 0) {
+        if ((i == 'r' || i == 'R') && b->t[r-1][c-1].flag == 0) {
                 return 1;
         }
         else {
@@ -264,155 +335,73 @@ int checktile(Board& b, int r, int c, char i) {
         }
 }
 
-void asktile(Board& b, int* r, int* c, char* i) {
+void tGame::asktile(int& r, int& c, char& i) {
         do {
                 do {
                         cout << "Would you like to place a flag, remove a flag, or uncover a tile: (p/r/u) " << endl;
-                        cin >> *i;
-                } while (*i != 'U' && *i != 'u' && *i != 'P' && *i != 'p' && *i != 'R' && *i != 'r');
+                        cin >> i;
+                } while (i != 'U' && i != 'u' && i != 'P' && i != 'p' && i != 'R' && i != 'r');
                 do {
                         cout << "What row: " << endl;
-                        cin >> *r;
-                } while (*r < 1 || *r > rowl);
+                        cin >> r;
+                } while (r < 1 || r > b->rowl);
                 do {
                         cout << "What column: " << endl;
-                        cin >> *c;
-                } while (*c < 1 || *c > coll);
-        } while (checktile(b, *r, *c, *i));
+                        cin >> c;
+                } while (c < 1 || c > b->coll);
+        } while (checktile(r, c, i));
         return;
 }
 
-
-void Board::check_empty(int r, int c) {
-        if(t[r][c].num == 0) {
-                if(r-1 >= 0 && c-1 >= 0) {
-                        if(t[r-1][c-1].show == 1) {
-                                ;
-                        }
-                        else{
-                                revealtile(r-1, c-1);
-                                check_empty(r-1, c-1);
-                        }
-                }
-                if(r-1 >= 0) {
-                        if(t[r-1][c].show == 1) {
-                                ;
-                        }
-                        else {
-                                revealtile(r-1, c);
-                                check_empty(r-1, c);
-                        }
-                }
-                if(r-1 >= 0 && c+1 < coll) {
-                        if(t[r-1][c+1].show == 1) {
-                                ;
-                        }
-                        else {
-                                revealtile(r-1, c+1);
-                                check_empty(r-1, c+1);
-                        }
-                }
-                if(c+1 < coll) {
-                        if(t[r][c+1].show == 1) {
-                                ;
-                        }
-                        else {
-                                revealtile(r, c+1);
-                                check_empty(r, c+1);
-                        }
-                }
-                if(r+1 < rowl && c+1 < coll) {
-                        if(t[r+1][c+1].show == 1) {
-                                ;
-                        }
-                        else {
-                                revealtile(r+1, c+1);
-                                check_empty(r+1, c+1);
-                        }
-                }
-                if(r+1 < rowl) {
-                        if(t[r+1][c].show == 1) {
-                                ;
-                        }
-                        else {
-                                revealtile(r+1, c);
-                                check_empty(r+1, c);
-                        }
-                }
-                if(r+1 < rowl && c-1 >= 0) {
-                        if(t[r+1][c-1].show == 1) {
-                                ;
-                        }
-                        else {
-                                revealtile(r+1, c-1);
-                                check_empty(r+1, c-1);
-                        }
-                }
-                if(c-1 >= 0) {
-                        if(t[r][c-1].show == 1) {
-                                ;
-                        }
-                        else {
-                                revealtile(r, c-1);
-                                check_empty(r, c-1);
-                        }
-                }
-        }
-        return;
-}
-
-void firstbox(Board *b, int *row, int *col, char *item) {
+void tGame::firstbox(int& row, int& col, char& item) {
                 do {
                         b->drawboard();
-                        asktile(*b, row, col, item);
-                        if(*item == 'p' || *item == 'P') {
-                                b->flagtile((*row)-1, (*col)-1);
+                        asktile(row, col, item);
+                        if(item == 'p' || item == 'P') {
+                                b->flagtile(row-1, col-1);
                         }
-                        if(*item == 'r' || *item == 'R') {
-                                b->unflagtile((*row)-1, (*col)-1);
+                        if(item == 'r' || item == 'R') {
+                                b->unflagtile(row-1, col-1);
                         }
-                        if(*item == 'u' || *item == 'U') {
-                                b->revealtile((*row)-1, (*col)-1);
+                        if(item == 'u' || item == 'U') {
+                                b->revealtile(row-1, col-1);
                         }
-                } while (*item != 'U' && *item != 'u');
-
+                } while (item != 'U' && item != 'u');
 }
 
-void play_game() {
+void tGame::play_game() {
         int row, col, n;
         char item;
-        Board b;
-        b.initboard();
-        firstbox(&b, &row, &col, &item);
-        b.placebombs(row, col);
-        b.check_empty(row-1, col -1);
+        firstbox(row, col, item);
+        b->placebombs(row, col);
+        b->check_empty(row-1, col -1);
         while(1) {
-                b.drawboard();
-                asktile(b, &row, &col, &item);
+                b->drawboard();
+                asktile(row, col, item);
                 if(item == 'p' || item == 'P') {
-                        b.flagtile(row-1, col-1);
+                        b->flagtile(row-1, col-1);
                 }
                 if(item == 'r' || item == 'R') {
-                        b.unflagtile(row-1, col-1);
+                        b->unflagtile(row-1, col-1);
                 }
                 if(item == 'u' || item == 'U') {
-                        if(b.t[row-1][col-1].bomb == 1) {
-                                for (int r = 0; r < rowl; r++) {
-                                        for (int c = 0; c < coll; c++) {
-                                                b.t[r][c].flag = 0;
-                                                b.t[r][c].show = 1;
+                        if(b->t[row-1][col-1].bomb == 1) {
+                                for (int r = 0; r < b->rowl; r++) {
+                                        for (int c = 0; c < b->coll; c++) {
+                                                b->t[r][c].flag = 0;
+                                                b->t[r][c].show = 1;
                                         }
                                 }
-                                b.drawboard();
+                                b->drawboard();
                                 cout << "You Lost!" << endl;
                                 return;
                         }
                         else {
-                                b.revealtile(row-1, col-1);
-                                b.check_empty(row-1, col-1);
+                                b->revealtile(row-1, col-1);
+                                b->check_empty(row-1, col-1);
                         }
                 }
-                if(b.check_win()) {
+                if(b->check_win()) {
                         cout << "You Won!" << endl;
                         return;
                 }
@@ -420,11 +409,12 @@ void play_game() {
 }
 
 int main() {
+        tGame game;
         while(1) {
-                check_boardsize();
-                check_difficulty();
-                play_game();
-                if (!play_again()) {
+                game.check_boardsize();
+                game.check_difficulty();
+                game.play_game();
+                if (!game.play_again()) {
                         break;
                 }
         }
