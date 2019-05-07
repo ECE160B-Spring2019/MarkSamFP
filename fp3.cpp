@@ -1,4 +1,8 @@
-#include "fp.h"
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <vector>
+
 
 #define RESET "\033[0m"
 #define BLUE "\033[1;34m"
@@ -11,12 +15,31 @@
 #define YELLOW "\033[0;33m"
 #define GAMELOST "\033[0;33m|\033[0m \033[1;31m*\033[0;0m  "
 
+class Tile {
+    public:
+        int flag;
+        int bomb;
+        int show;
+        int num;
+        Tile() {flag = 0, bomb = 0, show = 0, num = 0;}
+};
 
 using namespace std;
 
-class tBoard : public Board {
+class tBoard {
     public:
-        tBoard() : Board() {}
+        int rowl; //the last row
+        int coll; //the last column
+        int bombs;
+        int tilesShown;
+
+        tBoard() {
+            rowl = 0;
+            coll = 0;
+            bombs = 0;
+            tilesShown = 0;
+        }
+        vector< vector<Tile> > t; //the board
         void revealtile(int r, int c);
         void flagtile(int r, int c);
         void unflagtile(int r, int c);
@@ -30,9 +53,10 @@ class tBoard : public Board {
         void reset();
 };
 
-class tGame : public Game {
+class tGame {
     public:
-        tGame() : Game() {
+        tBoard* b;
+        tGame() {
             b = new tBoard;
         }
         ~tGame() {
@@ -49,32 +73,6 @@ class tGame : public Game {
         //void print_Records();
         //void check_Record();
 };
-
-// class tRecord : public Record {
-//     public:
-//         tRecord(int r, int c, time_t& begin, time_t& end, diffs di)
-//             rows = r;
-//             cols = c;
-//             d = di;
-//             time = difftime(begin, end);
-//         }
-//         bool operator>(Record& r) {
-//             int size = rows * cols;
-//             int size2 = r.rows * r.cols;
-//             if(size != size2) {
-//                 return size > size2;
-//             }
-//             else if(d != r.d) {
-//                 return d > r.d;
-//             }
-//             else {
-//                 return time <= r.time;
-//             }
-//         }
-//         void printRecord();
-// };
-//
-
 
 bool tBoard::freesquare(int r1, int r2, int r, int c) {
         return abs(r1 - r) <= 1 && abs(r2 - c) <= 1;
@@ -115,7 +113,6 @@ void tBoard::placebombs(int row, int col) {
                     t[rand1 + 1][rand2 - 1].num++;
                 }
         }
-
 }
 
 void tBoard::revealtile(int r, int c) {
@@ -170,7 +167,6 @@ void tBoard::drawtile(int r, int c) {
         }
         return;
 }
-
 
 void tBoard::drawboard() {
         int row;
@@ -322,15 +318,12 @@ void tGame::check_difficulty() {
 
         if(difficulty == 'e' || difficulty == 'E') {
                 b->bombs = (b->rowl * b->coll) * .12;
-                d = easy;
         }
         else if(difficulty == 'm' || difficulty == 'M') {
                 b->bombs = (b->rowl * b->coll) * .16;
-                d = medium;
         }
         else {
                 b->bombs = (b->rowl * b->coll) * .18;
-                d = hard;
         }
 }
 
@@ -455,32 +448,6 @@ void tGame::play_game() {
                 }
         }
 }
-
-// void tRecord::printRecord() {
-//     cout << "Time: " << time << "\t";
-//     cout << "Difficulty: " << d << "\t";
-//     cout << "Board size" << rows << "x" << cols << endl;
-// }
-//
-// void tGame::print_Records() {
-//     cout << "NEW RECORD!" << endl;
-//     for(int ii = 0; ii < records.size(); ii++) {
-//         cout << ii + 1 << "." << "\t";
-//         records[ii]->printRecord();
-//     }
-// }
-//
-// void tGame::check_Record() {
-//     tRecord* thisGame = new tRecord(b->rowl, b->coll, begin, end, d);
-//     int n = records.size();
-//     if(*thisGame > *(records[n - 1])) {
-//         records.push_back(thisGame);
-//         print_Records();
-//         }
-//     else {
-//         delete thisGame;
-//     }
-// }
 
 void tBoard::reset() {
         t.erase(t.begin(), t.end());
