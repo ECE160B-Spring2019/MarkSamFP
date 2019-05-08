@@ -98,13 +98,17 @@ void tGame::asktile(int& r, int& c, char& i) {
                         cin >> i;
                 } while (i != 'U' && i != 'u' && i != 'P' && i != 'p' && i != 'R' && i != 'r');
                 do {
+                        cin.clear();
+                        cin.ignore();
                         cout << "What row: " << endl;
                         cin >> r;
-                } while (r < 1 || r > b->rowl);
+                } while (r < 1 || r > b->rowl || cin.fail());
                 do {
+                        cin.clear();
+                        cin.ignore();
                         cout << "What column: " << endl;
                         cin >> c;
-                } while (c < 1 || c > b->coll);
+                } while (c < 1 || c > b->coll || cin.fail());
         } while (checktile(r, c, i));
         return;
 }
